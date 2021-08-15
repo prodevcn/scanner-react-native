@@ -1,0 +1,57 @@
+{
+  "name": "scanner",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.15.5",
+    "@react-native-community/masked-view": "^0.1.11",
+    "@react-navigation/native": "^5.9.4",
+    "@react-navigation/stack": "^5.14.5",
+    "axios": "^0.21.1",
+    "formik": "^2.2.9",
+    "native-base": "^3.0.6",
+    "react": "17.0.1",
+    "react-native": "0.64.2",
+    "react-native-camera": "^4.0.0",
+    "react-native-camera-kit": "^10.0.0",
+    "react-native-fs": "^2.18.0",
+    "react-native-gesture-handler": "^1.10.3",
+    "react-native-reanimated": "^2.2.0",
+    "react-native-safe-area-context": "^3.2.0",
+    "react-native-screens": "^3.4.0",
+    "react-native-share": "^7.0.0",
+    "react-native-splash-screen": "^3.2.0",
+    "react-native-svg": "^12.1.1",
+    "react-native-svg-transformer": "^0.14.3",
+    "react-native-table-component": "^1.2.1",
+    "react-native-vector-icons": "^8.1.0",
+    "react-redux": "^7.2.4",
+    "redux": "^4.1.0",
+    "redux-devtools-extension": "^2.13.9",
+    "redux-thunk": "^2.3.0",
+    "rxjs": "^7.2.0",
+    "styled-components": "^5.3.0",
+    "styled-system": "^5.1.5",
+    "xlsx": "^0.17.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.14.8",
+    "@babel/runtime": "^7.14.8",
+    "@react-native-community/eslint-config": "^3.0.0",
+    "babel-jest": "^27.0.6",
+    "eslint": "^7.31.0",
+    "jest": "^27.0.6",
+    "metro-react-native-babel-preset": "^0.66.2",
+    "react-test-renderer": "17.0.1"
+  },
+  "jest": {
+    "preset": "react-native"
+  }
+}
