@@ -59,11 +59,12 @@ export const fetchingPermittedShelves = data => dispatch => {
     axios
       .post('/shelf/get_shelves', data)
       .then(res => {
+        const fetchedData = res.data.filter(e => e.shelf !== null);
         dispatch({
           type: PERMITTED_SHELVES_FETCHING.SUCCESS,
-          payload: res.data,
+          payload: fetchedData,
         });
-        return res.data;
+        return fetchedData;
       })
       .catch(err => {
         console.log('[ERROR]:[PERMITTED_SHELVES_FETCHING]', err);

@@ -16,10 +16,10 @@ import LogoutIcon from '../../../assets/images/svg/logout.svg';
 
 const Header = props => {
   const [isOpen, setIsOpen] = useState(false);
+  const onClose = () => setIsOpen(false);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {authenticated} = useSelector(state => state.auth);
-  const onClose = () => setIsOpen(false);
   return (
     <HStack space={3} alignItems="center">
       {props.hasBackButton && (

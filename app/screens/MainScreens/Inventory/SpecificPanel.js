@@ -22,6 +22,7 @@ import {
   Pressable,
   Center,
   Spinner,
+  AlertDialog,
 } from 'native-base';
 import {useNavigation} from '@react-navigation/core';
 
@@ -48,6 +49,8 @@ import {
 import {GENERAL_FETCHING, GET_REPORT_PRODUCT} from '../../../constants/actions';
 
 const SpecificPanel = props => {
+  const [openDlg, setOpenDlg] = useState(false);
+  const onCloseDlg = () => setOpenDlg(false);
   const {isOpen, onOpen, onClose} = useDisclose();
   const [editIndex, setEditIndex] = useState(null);
   const toast = useToast();
@@ -494,7 +497,11 @@ const SpecificPanel = props => {
                                   code !== '' && name !== '' ? false : true
                                 }
                                 onPress={() => {
-                                  addItem();
+                                  if (quantity === 0) {
+                                    setOpenDlg(true);
+                                  } else {
+                                    addItem();
+                                  }
                                 }}>
                                 Save
                               </Button>
@@ -733,6 +740,22 @@ const SpecificPanel = props => {
               )}
             </Actionsheet.Content>
           </Actionsheet>
+          <AlertDialog
+            isOpen={openDlg}
+            onClose={onCloseDlg}
+            motionPreset={'fade'}>
+            <AlertDialog.Content>
+              <AlertDialog.Header fontSize="lg" fontWeight="bold">
+                Quantity is 0
+              </AlertDialog.Header>
+              <AlertDialog.Body>Please input quantity</AlertDialog.Body>
+              <AlertDialog.Footer>
+                <Button variant="ghost" onPress={onCloseDlg}>
+                  OK
+                </Button>
+              </AlertDialog.Footer>
+            </AlertDialog.Content>
+          </AlertDialog>
         </VStack>
       )}
     </Screen>

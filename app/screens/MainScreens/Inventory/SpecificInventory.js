@@ -8,6 +8,9 @@ import {
   FormControl,
   VStack,
   Heading,
+  AlertDialog,
+  Text,
+  Input,
 } from 'native-base';
 import {useNavigation} from '@react-navigation/native';
 
@@ -22,6 +25,8 @@ const SpecificInventory = props => {
   const navigation = useNavigation();
   const toast = useToast();
   const dispatch = useDispatch();
+  const [openDlg, setOpenDlg] = useState(false);
+  const onCloseDlg = () => setOpenDlg(false);
   const {
     permittedShelves,
     permittedSessions,
@@ -31,6 +36,30 @@ const SpecificInventory = props => {
   const [shelf, setShelf] = useState('');
   const [session, setSession] = useState('');
   const [round, setRound] = useState('');
+  const [alertErrorMessage, setErrorMessage] = useState(null);
+  const [securityCode, setSecurityCode] = useState('');
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [selectedShelfId, setSelectedShelfId] = useState(null);
+
+  const processCount = value => {
+    if (value === '') {
+      setErrorMessage('Security code is empty, please input it.');
+    }
+    if (value !== '123456') {
+      setErrorMessage('Security code is incorrect, please input correct code.');
+    }
+    if (value === '123456') {
+      onCloseDlg();
+      setErrorMessage(null);
+      navigation.navigate('specific-panel', {
+        shelfCode: shelf,
+        shelfId: selectedShelfId,
+        sessionId: selectedSessionId,
+        round: round,
+        type: 'SPECIFIC',
+      });
+    }
+  };
 
   const startCount = () => {
     if (shelf === '') {
@@ -38,9 +67,11 @@ const SpecificInventory = props => {
     } else {
       let sessionId;
       let shelfId;
+      let countedStatus = false;
       for (let item of permittedShelves) {
         if (item.shelf?.code === shelf) {
           shelfId = item.shelf.id;
+          countedStatus = item.counted;
         }
       }
       for (let item of permittedSessions) {
@@ -48,17 +79,34 @@ const SpecificInventory = props => {
           sessionId = item.id;
         }
       }
-      navigation.navigate('specific-panel', {
-        shelfCode: shelf,
-        shelfId: shelfId,
-        sessionId: sessionId,
-        round: round,
-        type: 'SPECIFIC',
-      });
+      setSelectedSessionId(sessionId);
+      setSelectedShelfId(shelfId);
+      if (countedStatus) {
+        setOpenDlg(true);
+      } else {
+        navigation.navigate('specific-panel', {
+          shelfCode: shelf,
+          shelfId: shelfId,
+          sessionId: sessionId,
+          round: round,
+          type: 'SPECIFIC',
+        });
+      }
     }
   };
 
+  const clearAll = () => {
+    setSelectedSessionId(null);
+    setSelectedShelfId(null);
+    setErrorMessage(null);
+    setShelf('');
+    setSession('');
+    setRound('');
+    setSecurityCode('');
+  };
+
   useEffect(() => {
+    clearAll();
     dispatch(fetchingPermittedSessions());
   }, []);
 
@@ -121,6 +169,7 @@ const SpecificInventory = props => {
         <FormControl isRequired>
           <Dropdown
             key="shelf"
+            icon
             placeholder="Please select shelf"
             selectedValue={shelf}
             defaultValue="select shelf"
@@ -130,6 +179,7 @@ const SpecificInventory = props => {
             data={permittedShelves.map(item => {
               return item.shelf?.code;
             })}
+            originData={permittedShelves}
           />
           <FormControl.ErrorMessage>
             Please select shelf
@@ -157,6 +207,43 @@ const SpecificInventory = props => {
           </Button>
         </HStack>
       </VStack>
+      <AlertDialog isOpen={openDlg} onClose={onCloseDlg} motionPreset={'fade'}>
+        <AlertDialog.Content>
+          <AlertDialog.Header fontSize="lg" fontWeight="bold">
+            Do you want to count again ?
+          </AlertDialog.Header>
+          <AlertDialog.Body>
+            Please input security code.
+            <Input
+              w="100%"
+              mt={10}
+              value={securityCode}
+              onChangeText={e => {
+                setSecurityCode(e);
+              }}
+            />
+            <Text color="red.700">{alertErrorMessage}</Text>
+          </AlertDialog.Body>
+          <AlertDialog.Footer>
+            <Button
+              variant="ghost"
+              onPress={() => {
+                setErrorMessage(null);
+                setSecurityCode('');
+                onCloseDlg();
+              }}>
+              Cancel
+            </Button>
+            <Button
+              variant="ghost"
+              onPress={() => {
+                processCount(securityCode);
+              }}>
+              OK
+            </Button>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
+      </AlertDialog>
     </Screen>
   );
 };

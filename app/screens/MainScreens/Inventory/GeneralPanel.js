@@ -22,6 +22,7 @@ import {
   Pressable,
   Spinner,
   Center,
+  AlertDialog,
 } from 'native-base';
 import {useNavigation} from '@react-navigation/core';
 
@@ -62,6 +63,8 @@ const GeneralPanel = props => {
   const {queryData, fetching, errorMessage} = useSelector(state => state.query);
   const {user} = useSelector(state => state.user);
   const navigate = useNavigation();
+  const [openDlg, setOpenDlg] = useState(false);
+  const onCloseDlg = () => setOpenDlg(false);
 
   useEffect(() => {
     return () => {
@@ -488,8 +491,12 @@ const GeneralPanel = props => {
                                   code !== '' && name !== '' ? false : true
                                 }
                                 onPress={() => {
-                                  setPage(1);
-                                  addItem();
+                                  if (quantity === 0) {
+                                    setOpenDlg(true);
+                                  } else {
+                                    setPage(1);
+                                    addItem();
+                                  }
                                 }}>
                                 Save
                               </Button>
@@ -542,6 +549,22 @@ const GeneralPanel = props => {
               )}
             </Actionsheet.Content>
           </Actionsheet>
+          <AlertDialog
+            isOpen={openDlg}
+            onClose={onCloseDlg}
+            motionPreset={'fade'}>
+            <AlertDialog.Content>
+              <AlertDialog.Header fontSize="lg" fontWeight="bold">
+                Quantity is 0
+              </AlertDialog.Header>
+              <AlertDialog.Body>Please input quantity</AlertDialog.Body>
+              <AlertDialog.Footer>
+                <Button variant="ghost" onPress={onCloseDlg}>
+                  OK
+                </Button>
+              </AlertDialog.Footer>
+            </AlertDialog.Content>
+          </AlertDialog>
         </VStack>
       )}
     </Screen>
