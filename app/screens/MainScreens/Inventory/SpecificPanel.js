@@ -182,14 +182,13 @@ const SpecificPanel = props => {
     const items = savedSpecificItems;
     onClose();
     const balance = await dispatch(getBalance(code));
-    const newItem = {
+    let newItem = {
       name: name,
       part_code: code,
       count: quantity,
       system_qty: balance?.system_qty,
       counted: counted,
     };
-    console.log(newItem);
     if (editIndex === null) {
       items.push(newItem);
       dispatch(saveSpecificItems(items));
@@ -274,7 +273,6 @@ const SpecificPanel = props => {
       session_id: props.route.params.sessionId,
       round: props.route.params.round,
     };
-    console.log(data);
     const checkedInfo = await dispatch(checkItemCounted(data));
     setCounted(checkedInfo.counted);
     setQuantity(checkedInfo.quantity);
@@ -284,7 +282,6 @@ const SpecificPanel = props => {
       setAlertMsg('Do you want to continue with this item?');
       setOpenDlg(true);
     }
-    // addItem();
   };
 
   return (

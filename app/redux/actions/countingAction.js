@@ -150,6 +150,7 @@ const createGeneralReportData = initialData => {
       part_code: item.part_code,
       system_qty: item.system_qty,
       count: item.count,
+      counted: item.counted,
     };
   });
   data.items = items;
@@ -158,7 +159,6 @@ const createGeneralReportData = initialData => {
 
 export const createGeneralReport = data => dispatch => {
   const reportData = createGeneralReportData(data);
-  console.log(reportData);
   return CreateAxios().then(axios =>
     axios
       .post('/report/create', reportData)
