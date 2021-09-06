@@ -42,6 +42,7 @@ import {
   getBalance,
   saveSpecificItems,
   getReportProduct,
+  checkItemCounted,
 } from '../../../redux/actions/countingAction';
 import {
   inventoryGeneralFetching,
@@ -188,6 +189,7 @@ const SpecificPanel = props => {
       system_qty: balance?.system_qty,
       counted: counted,
     };
+    console.log(newItem);
     if (editIndex === null) {
       items.push(newItem);
       dispatch(saveSpecificItems(items));
@@ -255,6 +257,34 @@ const SpecificPanel = props => {
     setAlertFlag(null);
     setAlertHeader(null);
     setAlertMsg(null);
+  };
+
+  const processAddItem = async pickedItem => {
+    setCode(pickedItem.Part_Cod);
+    setName(pickedItem.Part_Nam);
+    dispatch(dispatchController =>
+      dispatchController({
+        type: GENERAL_FETCHING.SUCCESS,
+        payload: [],
+      }),
+    );
+    const data = {
+      part_code: pickedItem.Part_Cod,
+      shelf_id: props.route.params.shelfId,
+      session_id: props.route.params.sessionId,
+      round: props.route.params.round,
+    };
+    console.log(data);
+    const checkedInfo = await dispatch(checkItemCounted(data));
+    setCounted(checkedInfo.counted);
+    setQuantity(checkedInfo.quantity);
+    if (checkedInfo.counted === 1) {
+      setAlertFlag('confirm');
+      setAlertHeader('This item was already counted!');
+      setAlertMsg('Do you want to continue with this item?');
+      setOpenDlg(true);
+    }
+    // addItem();
   };
 
   return (
@@ -756,14 +786,7 @@ const SpecificPanel = props => {
                               w="100%"
                               key={`PRESS_${index}`}
                               onPress={() => {
-                                setCode(item.Part_Cod);
-                                setName(item.Part_Nam);
-                                dispatch(dispatchController =>
-                                  dispatchController({
-                                    type: GENERAL_FETCHING.SUCCESS,
-                                    payload: [],
-                                  }),
-                                );
+                                processAddItem(item);
                               }}>
                               <HStack
                                 alignItems="center"
@@ -823,12 +846,27 @@ const SpecificPanel = props => {
                           payload: [],
                         }),
                       );
+                    } else if (alertFlag === 'confirm') {
+                      onCloseDlg();
                     }
                   }}>
                   OK
                 </Button>
-                {(alertFlag === 'report' || alertFlag === 'third_count') && (
-                  <Button variant="ghost" onPress={onCloseDlg}>
+                {(alertFlag === 'report' ||
+                  alertFlag === 'third_count' ||
+                  alertFlag === 'confirm') && (
+                  <Button
+                    variant="ghost"
+                    onPress={() => {
+                      if (alertFlag === 'confirm') {
+                        setCode('');
+                        setName('');
+                        setQuantity(0);
+                        onCloseDlg();
+                      } else {
+                        onCloseDlg();
+                      }
+                    }}>
                     CANCEL
                   </Button>
                 )}

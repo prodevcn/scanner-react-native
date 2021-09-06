@@ -44,13 +44,16 @@ const SpecificInventory = props => {
   const processCount = value => {
     if (value === '') {
       setErrorMessage('Security code is empty, please input it.');
+      setSecurityCode('');
     }
     if (value !== '123456') {
       setErrorMessage('Security code is incorrect, please input correct code.');
+      setSecurityCode('');
     }
     if (value === '123456') {
       onCloseDlg();
       setErrorMessage(null);
+      setSecurityCode('');
       navigation.navigate('specific-panel', {
         shelfCode: shelf,
         shelfId: selectedShelfId,

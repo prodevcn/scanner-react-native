@@ -270,6 +270,45 @@ export const saveGeneralItems = data => dispatch => {
 };
 
 export const saveSpecificItems = data => dispatch => {
-  console.log(data);
   return dispatch({type: SAVE_SPECIFIC_ITEMS, payload: data});
+};
+
+export const checkItemCounted = data => dispatch => {
+  dispatch({type: GET_REPORT_PRODUCT.REQUEST});
+  return CreateAxios().then(axios =>
+    axios
+      .post('/report/check_counted', data)
+      .then(res => {
+        if (res.data) {
+          dispatch({type: GET_REPORT_PRODUCT.SUCCESS, payload: []});
+          return res.data;
+        }
+      })
+      .catch(err => {
+        if (err.response) {
+          dispatch({
+            type: GET_REPORT_PRODUCT.FAILURE,
+            payload: err.response.data?.message,
+          });
+          setTimeout(() => {
+            dispatch({
+              type: GET_REPORT_PRODUCT.FAILURE,
+              payload: null,
+            });
+          }, 2000);
+        } else {
+          dispatch({
+            type: GET_REPORT_PRODUCT.FAILURE,
+            payload:
+              'This device can not connect to server, Please try again after a few minutes.',
+          });
+          setTimeout(() => {
+            dispatch({
+              type: GET_REPORT_PRODUCT.FAILURE,
+              payload: null,
+            });
+          }, 2000);
+        }
+      }),
+  );
 };
