@@ -1,7 +1,6 @@
-/* eslint-disable no-alert */
 import React, {useEffect} from 'react';
 import {Provider} from 'react-redux';
-import {Platform, StatusBar, PermissionsAndroid} from 'react-native';
+import {Platform, StatusBar} from 'react-native';
 import {NativeBaseProvider} from 'native-base';
 import SplashScreen from 'react-native-splash-screen';
 

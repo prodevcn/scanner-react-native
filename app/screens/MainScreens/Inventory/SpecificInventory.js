@@ -108,6 +108,14 @@ const SpecificInventory = props => {
   useEffect(() => {
     clearAll();
     dispatch(fetchingPermittedSessions());
+    navigation.addListener('focus', () => {
+      setShelf('');
+      setSession('');
+    });
+    return () => {
+      setShelf('');
+      setSession('');
+    };
   }, []);
 
   useEffect(() => {

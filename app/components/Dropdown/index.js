@@ -14,7 +14,10 @@ const Dropdown = props => {
   const {isOpen, onOpen, onClose} = useDisclose();
   const getAllEntries = shelfCode => {
     if (shelfCode && props.originData.length > 0) {
-      return props.originData.filter(e => e.shelf?.code === shelfCode)[0];
+      const entries = props.originData.filter(
+        e => e.shelf?.code === shelfCode,
+      )[0];
+      return entries;
     } else {
       return {};
     }

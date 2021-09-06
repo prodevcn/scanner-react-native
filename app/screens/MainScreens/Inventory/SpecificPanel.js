@@ -23,6 +23,7 @@ import {
   Center,
   Spinner,
   AlertDialog,
+  CheckCircleIcon,
 } from 'native-base';
 import {useNavigation} from '@react-navigation/core';
 
@@ -58,6 +59,10 @@ const SpecificPanel = props => {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState(0);
+  const [alertFlag, setAlertFlag] = useState(null);
+  const [alertHead, setAlertHeader] = useState(null);
+  const [alertMsg, setAlertMsg] = useState(null);
+  const [counted, setCounted] = useState(0);
   const dispatch = useDispatch();
   const {savedSpecificItems, fetchingCount, reportProducts} = useSelector(
     state => state.counting,
@@ -80,6 +85,12 @@ const SpecificPanel = props => {
     }
     return () => {
       dispatch(clearSearchHistory());
+      setAlertFlag(null);
+      setAlertHeader(null);
+      setAlertMsg(null);
+      setEditIndex(null);
+      setCode(null);
+      setName(null);
     };
   }, []);
 
@@ -175,6 +186,7 @@ const SpecificPanel = props => {
       part_code: code,
       count: quantity,
       system_qty: balance?.system_qty,
+      counted: counted,
     };
     if (editIndex === null) {
       items.push(newItem);
@@ -240,6 +252,9 @@ const SpecificPanel = props => {
         }
       });
     }
+    setAlertFlag(null);
+    setAlertHeader(null);
+    setAlertMsg(null);
   };
 
   return (
@@ -379,7 +394,10 @@ const SpecificPanel = props => {
                   w="40%"
                   disabled={savedSpecificItems.length < 1 ? true : false}
                   onPress={() => {
-                    doCreateReport();
+                    setAlertMsg('Do you want to report current counting ?');
+                    setAlertHeader(null);
+                    setAlertFlag('report');
+                    setOpenDlg(true);
                   }}>
                   Save
                 </Button>
@@ -498,6 +516,9 @@ const SpecificPanel = props => {
                                 }
                                 onPress={() => {
                                   if (quantity === 0) {
+                                    setAlertMsg('Please input quantity');
+                                    setAlertHeader('Quantity is 0');
+                                    setAlertFlag('item');
                                     setOpenDlg(true);
                                   } else {
                                     addItem();
@@ -520,34 +541,62 @@ const SpecificPanel = props => {
                               setQuantity(
                                 item.Third_Count ? Number(item.Third_Count) : 0,
                               );
-                              dispatch(dispatchController =>
-                                dispatchController({
-                                  type: GET_REPORT_PRODUCT.SUCCESS,
-                                  payload: [],
-                                }),
-                              );
+                              if (item.Third_Count) {
+                                setAlertFlag('third_count');
+                                setAlertHeader(
+                                  'This item was already counted!',
+                                );
+                                setAlertMsg(
+                                  'Do you want to continue with this item?',
+                                );
+                                setOpenDlg(true);
+                              } else {
+                                setCounted(0);
+                                dispatch(dispatchController =>
+                                  dispatchController({
+                                    type: GET_REPORT_PRODUCT.SUCCESS,
+                                    payload: [],
+                                  }),
+                                );
+                              }
                             }}>
                             <HStack
                               alignItems="center"
                               rounded="md"
                               key={`REPORT_PRODUCT_${index}`}
                               w="100%"
+                              justifyContent="space-around"
                               bg={index % 2 === 0 && 'primary.600'}
                               p={3}>
-                              <Text
-                                color={
-                                  index % 2 === 0 ? 'white' : 'primary.600'
-                                }
-                                w="50%">
-                                {item.Part_Cod}
-                              </Text>
-                              <Text
-                                w="50%"
-                                color={
-                                  index % 2 === 0 ? 'white' : 'primary.600'
-                                }>
-                                {item.Part_Nam}
-                              </Text>
+                              <HStack w="90%" alignItems="center">
+                                <Text
+                                  color={
+                                    index % 2 === 0 ? 'white' : 'primary.600'
+                                  }
+                                  w="50%">
+                                  {item.Part_Cod}
+                                </Text>
+                                <Text
+                                  w="50%"
+                                  color={
+                                    index % 2 === 0 ? 'white' : 'primary.600'
+                                  }>
+                                  {item.Part_Nam}
+                                </Text>
+                              </HStack>
+                              <HStack
+                                w="10%"
+                                alignItems="center"
+                                justifyContent="flex-end">
+                                {item.Third_Count && (
+                                  <CheckCircleIcon
+                                    size="sm"
+                                    color={
+                                      index % 2 === 0 ? 'white' : 'primary.600'
+                                    }
+                                  />
+                                )}
+                              </HStack>
                             </HStack>
                           </Pressable>
                         ))}
@@ -685,8 +734,15 @@ const SpecificPanel = props => {
                                     code !== '' && name !== '' ? false : true
                                   }
                                   onPress={() => {
-                                    setPage(1);
-                                    addItem();
+                                    if (quantity === 0) {
+                                      setAlertMsg('Please input quantity');
+                                      setAlertHeader('Quantity is 0');
+                                      setAlertFlag('item');
+                                      setOpenDlg(true);
+                                    } else {
+                                      setPage(1);
+                                      addItem();
+                                    }
                                   }}>
                                   Save
                                 </Button>
@@ -746,13 +802,36 @@ const SpecificPanel = props => {
             motionPreset={'fade'}>
             <AlertDialog.Content>
               <AlertDialog.Header fontSize="lg" fontWeight="bold">
-                Quantity is 0
+                {alertHead}
               </AlertDialog.Header>
-              <AlertDialog.Body>Please input quantity</AlertDialog.Body>
+              <AlertDialog.Body>{alertMsg}</AlertDialog.Body>
               <AlertDialog.Footer>
-                <Button variant="ghost" onPress={onCloseDlg}>
+                <Button
+                  variant="ghost"
+                  onPress={() => {
+                    if (alertFlag === 'item') {
+                      onCloseDlg();
+                    } else if (alertFlag === 'report') {
+                      doCreateReport();
+                      onCloseDlg();
+                    } else if (alertFlag === 'third_count') {
+                      setCounted(1);
+                      onCloseDlg();
+                      dispatch(dispatchController =>
+                        dispatchController({
+                          type: GET_REPORT_PRODUCT.SUCCESS,
+                          payload: [],
+                        }),
+                      );
+                    }
+                  }}>
                   OK
                 </Button>
+                {(alertFlag === 'report' || alertFlag === 'third_count') && (
+                  <Button variant="ghost" onPress={onCloseDlg}>
+                    CANCEL
+                  </Button>
+                )}
               </AlertDialog.Footer>
             </AlertDialog.Content>
           </AlertDialog>

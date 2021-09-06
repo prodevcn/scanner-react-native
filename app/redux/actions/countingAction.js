@@ -270,5 +270,6 @@ export const saveGeneralItems = data => dispatch => {
 };
 
 export const saveSpecificItems = data => dispatch => {
+  console.log(data);
   return dispatch({type: SAVE_SPECIFIC_ITEMS, payload: data});
 };
