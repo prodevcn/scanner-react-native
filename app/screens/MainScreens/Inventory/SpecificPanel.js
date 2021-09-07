@@ -48,7 +48,11 @@ import {
   inventoryGeneralFetching,
   clearSearchHistory,
 } from '../../../redux/actions/queryAction';
-import {GENERAL_FETCHING, GET_REPORT_PRODUCT} from '../../../constants/actions';
+import {
+  GENERAL_FETCHING,
+  GET_REPORT_PRODUCT,
+  SAVE_SPECIFIC_ITEMS,
+} from '../../../constants/actions';
 
 const SpecificPanel = props => {
   const [openDlg, setOpenDlg] = useState(false);
@@ -72,7 +76,7 @@ const SpecificPanel = props => {
   const {queryData, fetching, errorMessage} = useSelector(state => state.query);
   const {user} = useSelector(state => state.user);
   const [page, setPage] = useState(1);
-  const {goBack} = useNavigation();
+  const navigation = useNavigation();
 
   /** check 123456 */
   const [securityCode, setSecurityCode] = useState('');
@@ -91,6 +95,11 @@ const SpecificPanel = props => {
         }),
       );
     }
+    navigation.addListener('blur', () => {
+      dispatch(dispatchController =>
+        dispatchController({type: SAVE_SPECIFIC_ITEMS, payload: []}),
+      );
+    });
     return () => {
       dispatch(clearSearchHistory());
       setAlertFlag(null);
@@ -197,8 +206,21 @@ const SpecificPanel = props => {
       counted: counted,
     };
     if (editIndex === null) {
-      items.push(newItem);
-      dispatch(saveSpecificItems(items));
+      if (alreadyCountedIndex === null) {
+        items.push(newItem);
+        dispatch(saveSpecificItems(items));
+      } else {
+        const addedItems = items.map((e, index) => {
+          if (index === alreadyCountedIndex) {
+            newItem.count += e.count;
+            return newItem;
+          } else {
+            return e;
+          }
+        });
+        dispatch(saveSpecificItems(addedItems));
+        setAlreadyCountedIndex(null);
+      }
     } else {
       const editedItems = items.map((e, index) => {
         if (index === editIndex) {
@@ -264,7 +286,7 @@ const SpecificPanel = props => {
     setAlertHeader(null);
     setAlertMsg(null);
     setTimeout(() => {
-      goBack();
+      navigation.goBack();
     }, 1000);
   };
 
@@ -458,7 +480,7 @@ const SpecificPanel = props => {
                   variant="outline"
                   w="40%"
                   onPress={() => {
-                    goBack();
+                    navigation.goBack();
                   }}>
                   Cancel
                 </Button>
@@ -919,7 +941,11 @@ const SpecificPanel = props => {
                           payload: [],
                         }),
                       );
-                      onEdit(alreadyCountedIndex);
+                      // onEdit(alreadyCountedIndex);
+                      setCode(
+                        savedSpecificItems[alreadyCountedIndex].part_code,
+                      );
+                      setName(savedSpecificItems[alreadyCountedIndex].name);
                       onCloseDlg();
                     }
                   }}>
