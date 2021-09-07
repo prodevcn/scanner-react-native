@@ -25,7 +25,7 @@ import {
   AlertDialog,
   CheckCircleIcon,
 } from 'native-base';
-import {useNavigation} from '@react-navigation/core';
+import {useNavigation} from '@react-navigation/native';
 
 import ScanIcon from '../../../../assets/images/svg/maximize.svg';
 import Screen from '../../../layouts/Screen';
@@ -64,6 +64,7 @@ const SpecificPanel = props => {
   const [alertHead, setAlertHeader] = useState(null);
   const [alertMsg, setAlertMsg] = useState(null);
   const [counted, setCounted] = useState(0);
+  const [alreadyCountedIndex, setAlreadyCountedIndex] = useState(null);
   const dispatch = useDispatch();
   const {savedSpecificItems, fetchingCount, reportProducts} = useSelector(
     state => state.counting,
@@ -71,7 +72,13 @@ const SpecificPanel = props => {
   const {queryData, fetching, errorMessage} = useSelector(state => state.query);
   const {user} = useSelector(state => state.user);
   const [page, setPage] = useState(1);
-  const navigate = useNavigation();
+  const {goBack} = useNavigation();
+
+  /** check 123456 */
+  const [securityCode, setSecurityCode] = useState('');
+  const [openConfirmDlg, setOpenConfirmDlg] = useState(false);
+  const [alertErrorMessage, setErrorMessage] = useState(null);
+  const onCloseConfirmDlg = () => setOpenConfirmDlg(false);
 
   useEffect(() => {
     if (props.route.params.round === 3) {
@@ -256,31 +263,69 @@ const SpecificPanel = props => {
     setAlertFlag(null);
     setAlertHeader(null);
     setAlertMsg(null);
+    setTimeout(() => {
+      goBack();
+    }, 1000);
+  };
+
+  const checkExistInSavedItem = part_code => {
+    for (let index = 0; index < savedSpecificItems.length; index++) {
+      if (savedSpecificItems[index].part_code === part_code) {
+        return {index: index, code: part_code, status: true};
+      }
+    }
+    return {index: null, code: null, status: false};
   };
 
   const processAddItem = async pickedItem => {
-    setCode(pickedItem.Part_Cod);
-    setName(pickedItem.Part_Nam);
-    dispatch(dispatchController =>
-      dispatchController({
-        type: GENERAL_FETCHING.SUCCESS,
-        payload: [],
-      }),
-    );
-    const data = {
-      part_code: pickedItem.Part_Cod,
-      shelf_id: props.route.params.shelfId,
-      session_id: props.route.params.sessionId,
-      round: props.route.params.round,
-    };
-    const checkedInfo = await dispatch(checkItemCounted(data));
-    setCounted(checkedInfo.counted);
-    setQuantity(checkedInfo.quantity);
-    if (checkedInfo.counted === 1) {
-      setAlertFlag('confirm');
+    let existCheckResult = checkExistInSavedItem(pickedItem.Part_Cod);
+    if (!existCheckResult.status) {
+      setCode(pickedItem.Part_Cod);
+      setName(pickedItem.Part_Nam);
+      dispatch(dispatchController =>
+        dispatchController({
+          type: GENERAL_FETCHING.SUCCESS,
+          payload: [],
+        }),
+      );
+      const data = {
+        part_code: pickedItem.Part_Cod,
+        shelf_id: props.route.params.shelfId,
+        session_id: props.route.params.sessionId,
+        round: props.route.params.round,
+      };
+      let checkedInfo = await dispatch(checkItemCounted(data));
+      setCounted(checkedInfo.counted);
+      setQuantity(checkedInfo.quantity);
+      if (checkedInfo.counted === 1) {
+        setAlertFlag('confirm');
+        setAlertHeader('This item was already counted!');
+        setAlertMsg('Do you want to continue with this item?');
+        setOpenDlg(true);
+      }
+    } else {
+      setAlreadyCountedIndex(existCheckResult.index);
+      setAlertFlag('already_counted');
       setAlertHeader('This item was already counted!');
       setAlertMsg('Do you want to continue with this item?');
       setOpenDlg(true);
+    }
+  };
+
+  const continueCounting = value => {
+    if (value === '') {
+      setErrorMessage('Security code is empty, please input it.');
+      setSecurityCode('');
+    }
+    if (value !== '123456') {
+      setErrorMessage('Security code is incorrect, please input correct code.');
+      setSecurityCode('');
+    }
+    if (value === '123456') {
+      onCloseConfirmDlg();
+      setErrorMessage(null);
+      setSecurityCode('');
+      addItem();
     }
   };
 
@@ -413,7 +458,7 @@ const SpecificPanel = props => {
                   variant="outline"
                   w="40%"
                   onPress={() => {
-                    navigate.goBack();
+                    goBack();
                   }}>
                   Cancel
                 </Button>
@@ -543,10 +588,7 @@ const SpecificPanel = props => {
                                 }
                                 onPress={() => {
                                   if (quantity === 0) {
-                                    setAlertMsg('Please input quantity');
-                                    setAlertHeader('Quantity is 0');
-                                    setAlertFlag('item');
-                                    setOpenDlg(true);
+                                    setOpenConfirmDlg(true);
                                   } else {
                                     addItem();
                                   }
@@ -563,13 +605,38 @@ const SpecificPanel = props => {
                             w="100%"
                             key={`PRESS_PRODUCT_${index}`}
                             onPress={() => {
-                              setCode(item.Part_Cod);
-                              setName(item.Part_Nam);
-                              setQuantity(
-                                item.Third_Count ? Number(item.Third_Count) : 0,
+                              const existCheckResult = checkExistInSavedItem(
+                                item.Part_Cod,
                               );
-                              if (item.Third_Count) {
-                                setAlertFlag('third_count');
+                              if (!existCheckResult.status) {
+                                setCode(item.Part_Cod);
+                                setName(item.Part_Nam);
+                                setQuantity(
+                                  item.Third_Count
+                                    ? Number(item.Third_Count)
+                                    : 0,
+                                );
+                                if (item.Third_Count) {
+                                  setAlertFlag('third_count');
+                                  setAlertHeader(
+                                    'This item was already counted!',
+                                  );
+                                  setAlertMsg(
+                                    'Do you want to continue with this item?',
+                                  );
+                                  setOpenDlg(true);
+                                } else {
+                                  setCounted(0);
+                                  dispatch(dispatchController =>
+                                    dispatchController({
+                                      type: GET_REPORT_PRODUCT.SUCCESS,
+                                      payload: [],
+                                    }),
+                                  );
+                                }
+                              } else {
+                                setAlreadyCountedIndex(existCheckResult.index);
+                                setAlertFlag('already_counted');
                                 setAlertHeader(
                                   'This item was already counted!',
                                 );
@@ -577,14 +644,6 @@ const SpecificPanel = props => {
                                   'Do you want to continue with this item?',
                                 );
                                 setOpenDlg(true);
-                              } else {
-                                setCounted(0);
-                                dispatch(dispatchController =>
-                                  dispatchController({
-                                    type: GET_REPORT_PRODUCT.SUCCESS,
-                                    payload: [],
-                                  }),
-                                );
                               }
                             }}>
                             <HStack
@@ -615,7 +674,9 @@ const SpecificPanel = props => {
                                 w="10%"
                                 alignItems="center"
                                 justifyContent="flex-end">
-                                {item.Third_Count && (
+                                {(item.Third_Count ||
+                                  checkExistInSavedItem(item.Part_Cod)
+                                    .status) && (
                                   <CheckCircleIcon
                                     size="sm"
                                     color={
@@ -845,13 +906,29 @@ const SpecificPanel = props => {
                       );
                     } else if (alertFlag === 'confirm') {
                       onCloseDlg();
+                    } else if (alertFlag === 'already_counted') {
+                      dispatch(dispatchController =>
+                        dispatchController({
+                          type: GET_REPORT_PRODUCT.SUCCESS,
+                          payload: [],
+                        }),
+                      );
+                      dispatch(dispatchController =>
+                        dispatchController({
+                          type: GENERAL_FETCHING.SUCCESS,
+                          payload: [],
+                        }),
+                      );
+                      onEdit(alreadyCountedIndex);
+                      onCloseDlg();
                     }
                   }}>
                   OK
                 </Button>
                 {(alertFlag === 'report' ||
                   alertFlag === 'third_count' ||
-                  alertFlag === 'confirm') && (
+                  alertFlag === 'confirm' ||
+                  alertFlag === 'already_counted') && (
                   <Button
                     variant="ghost"
                     onPress={() => {
@@ -867,6 +944,46 @@ const SpecificPanel = props => {
                     CANCEL
                   </Button>
                 )}
+              </AlertDialog.Footer>
+            </AlertDialog.Content>
+          </AlertDialog>
+          <AlertDialog
+            isOpen={openConfirmDlg}
+            onClose={onCloseConfirmDlg}
+            motionPreset={'fade'}>
+            <AlertDialog.Content>
+              <AlertDialog.Header fontSize="lg" fontWeight="bold">
+                Do you want to continue with quantity 0 ?
+              </AlertDialog.Header>
+              <AlertDialog.Body>
+                Please input security code.
+                <Input
+                  w="100%"
+                  mt={10}
+                  value={securityCode}
+                  onChangeText={e => {
+                    setSecurityCode(e);
+                  }}
+                />
+                <Text color="red.700">{alertErrorMessage}</Text>
+              </AlertDialog.Body>
+              <AlertDialog.Footer>
+                <Button
+                  variant="ghost"
+                  onPress={() => {
+                    setErrorMessage(null);
+                    setSecurityCode('');
+                    onCloseConfirmDlg();
+                  }}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="ghost"
+                  onPress={() => {
+                    continueCounting(securityCode);
+                  }}>
+                  OK
+                </Button>
               </AlertDialog.Footer>
             </AlertDialog.Content>
           </AlertDialog>
