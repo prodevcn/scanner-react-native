@@ -56,7 +56,7 @@ const Screen = props => {
         )}
       </Box>
       {props.errorMessage !== null && props.errorMessage !== undefined && (
-        <HStack position="absolute" w="100%">
+        <HStack position="absolute" w="100%" bottom={0}>
           <Alert status="error" w="100%">
             <Alert.Icon />
             <Alert.Title flexShrink={1}>{props.errorMessage}</Alert.Title>
